@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AJ Health">
+<meta name="theme-color" content="#f5f5f7">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNGE5ZmY1Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMzRjNzU5Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIHJ4PSI0MCIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjkwIiB5PSI3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDIiIGZvbnQtd2VpZ2h0PSI3MDAiPkFKPC90ZXh0Pjx0ZXh0IHg9IjkwIiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC44KSIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9IjYwMCI+SEVBTFRIPC90ZXh0Pjxwb2x5bGluZSBwb2ludHM9IjM1LDE0MCA2MCwxMjUgODAsMTM1IDEwMCwxMTAgMTIwLDEyMCAxNDUsMTAwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC42KSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=">
+<title>AJ's Health Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface-light: #f0f0f2;
+    --text: #1d1d1f;
+    --text-muted: #86868b;
+    --accent-weight: #e94560;
+    --accent-protein: #4a9ff5;
+    --accent-steps: #53d769;
+    --accent-weekly: #f5a623;
+    --accent-green: #34c759;
+    --accent-red: #ff3b30;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --tab-height: 60px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 12px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    line-height: 1;
+    transition: background 0.2s;
+  }
+  .header-btn:active { background: var(--surface-light); }
+
+  /* Streak badge */
+  .streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #ff9500, #ff3b30);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    animation: streakPulse 2s ease-in-out infinite;
+  }
+  .streak-badge.hidden { display: none; }
+  @keyframes streakPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Tab content area */
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Bottom tab bar */
+  .tab-bar {
+    display: flex;
+    background: var(--surface);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.04);
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: var(--tab-height);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    cursor: pointer;
+    gap: 4px;
+    transition: color 0.2s, transform 0.15s;
+  }
+  .tab-btn:active { transform: scale(0.92); }
+  .tab-btn.active { color: var(--accent-protein); }
+  .tab-btn svg { width: 22px; height: 22px; }
+
+  /* Metric cards */
+  .metric-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .metric-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .metric-card:active { transform: scale(0.97); box-shadow: var(--shadow-lg); }
+  .metric-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .metric-goal { font-size: 12px; color: var(--text-muted); }
+  .metric-value {
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    transition: color 0.3s;
+  }
+  .metric-unit { font-size: 16px; font-weight: 400; color: var(--text-muted); }
+  .metric-trend { font-size: 13px; font-weight: 500; }
+  .trend-good { color: var(--accent-green); }
+  .trend-bad { color: var(--accent-red); }
+  .trend-neutral { color: var(--text-muted); }
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    border-radius: 0 2px 0 0;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .card-weight .metric-value { color: var(--accent-weight); }
+  .card-weight .progress-bar { background: var(--accent-weight); }
+  .card-protein .metric-value { color: var(--accent-protein); }
+  .card-protein .progress-bar { background: var(--accent-protein); }
+  .card-steps .metric-value { color: var(--accent-steps); }
+  .card-steps .progress-bar { background: var(--accent-steps); }
+
+  /* Card entrance animations */
+  .metric-card { opacity: 0; transform: translateY(20px); }
+  .metric-card.animate-in {
+    animation: cardSlideIn 0.4s ease-out forwards;
+  }
+  @keyframes cardSlideIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Protein items indicator */
+  .protein-items-preview {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .protein-item-chip {
+    font-size: 11px;
+    background: rgba(74, 159, 245, 0.1);
+    color: var(--accent-protein);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  /* Date display */
+  .date-display {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* Weekly form */
+  .weekly-form { margin-top: 8px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-group input:focus {
+    border-color: var(--accent-weekly);
+    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent-weekly);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* History tab */
+  .history-toggle {
+    display: flex;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+    box-shadow: var(--shadow);
+  }
+  .history-toggle button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .history-toggle button.active {
+    background: var(--accent-protein);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(74, 159, 245, 0.3);
+  }
+  .history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .history-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface-light);
+    padding: 12px 8px;
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .history-table tbody td {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    white-space: nowrap;
+  }
+  .history-table tbody tr:active { background: var(--surface-light); }
+
+  /* Charts tab */
+  .chart-toggles { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 16px; }
+  .chart-chip {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chart-chip.active {
+    background: var(--accent-protein);
+    border-color: var(--accent-protein);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(74, 159, 245, 0.3);
+  }
+  .chart-type-toggle {
+    display: flex;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 3px;
+    margin-top: 8px;
+    box-shadow: var(--shadow);
+  }
+  .chart-type-toggle button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chart-type-toggle button.active {
+    background: var(--accent-protein);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(74, 159, 245, 0.3);
+  }
+  .chart-container {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 8px;
+    margin-top: 12px;
+    position: relative;
+    height: 300px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Modal / Bottom sheet */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .modal-header h3 { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    background: var(--surface-light);
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-input {
+    width: 100%;
+    padding: 18px;
+    border-radius: 14px;
+    border: 2px solid rgba(0,0,0,0.06);
+    background: var(--surface-light);
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    margin-bottom: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .modal-input:focus {
+    border-color: var(--accent-protein);
+    box-shadow: 0 0 0 3px rgba(74, 159, 245, 0.15);
+  }
+  .modal-date {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .modal-date input {
+    background: none;
+    border: none;
+    color: var(--accent-protein);
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+  }
+  .modal-save {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .modal-save:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* Protein bottom sheet */
+  .protein-total {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .protein-total-value {
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--accent-protein);
+  }
+  .protein-total-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .preset-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--surface-light);
+    border: 1.5px solid rgba(0,0,0,0.04);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-align: left;
+  }
+  .preset-btn:active { transform: scale(0.95); }
+  .preset-btn.bounce {
+    animation: presetBounce 0.4s ease;
+  }
+  @keyframes presetBounce {
+    0% { transform: scale(1); }
+    30% { transform: scale(0.92); }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  .preset-emoji { font-size: 24px; }
+  .preset-info { flex: 1; }
+  .preset-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .preset-grams { font-size: 11px; color: var(--text-muted); }
+
+  .custom-add-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px dashed rgba(0,0,0,0.1);
+    background: none;
+    color: var(--accent-protein);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background 0.2s;
+  }
+  .custom-add-btn:active { background: var(--surface-light); }
+
+  .custom-form {
+    display: none;
+    gap: 8px;
+    margin-bottom: 16px;
+    background: var(--surface-light);
+    padding: 14px;
+    border-radius: 12px;
+  }
+  .custom-form.show { display: flex; }
+  .custom-form input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .custom-form input:focus { border-color: var(--accent-protein); }
+  .custom-form button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent-protein);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .protein-log-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .protein-log-list { list-style: none; }
+  .protein-log-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    animation: itemFadeIn 0.3s ease;
+  }
+  @keyframes itemFadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .protein-log-item-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .protein-log-item-name { font-size: 14px; font-weight: 500; }
+  .protein-log-item-qty { font-size: 12px; color: var(--text-muted); }
+  .protein-log-item-grams {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-protein);
+    margin-right: 8px;
+  }
+  .protein-log-item-delete {
+    background: none;
+    border: none;
+    color: var(--accent-red);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    opacity: 0.6;
+  }
+  .protein-log-item-delete:active { opacity: 1; background: rgba(255,59,48,0.1); }
+  .protein-log-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 16px 0;
+  }
+
+  /* Goals panel */
+  .goals-panel {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .goals-panel.show { display: flex; }
+  .goals-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .goals-header h2 { font-size: 18px; font-weight: 700; }
+  .goals-back {
+    background: none;
+    border: none;
+    color: var(--accent-protein);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px;
+  }
+  .goals-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+  .goal-item {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .goal-item label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .goal-row { display: flex; gap: 10px; align-items: center; }
+  .goal-row input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    background: var(--surface-light);
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+  }
+  .goal-row input:focus { border-color: var(--accent-protein); }
+  .goal-direction {
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid rgba(0,0,0,0.08);
+  }
+  .goal-direction button {
+    padding: 10px 12px;
+    background: var(--surface-light);
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .goal-direction button.active {
+    background: var(--accent-protein);
+    color: #fff;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--text);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 300;
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+
+  /* Prediction card in goals */
+  .prediction-card {
+    background: linear-gradient(135deg, rgba(74,159,245,0.08), rgba(52,199,89,0.08));
+    border: 1.5px solid rgba(74,159,245,0.15);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .prediction-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent-protein);
+  }
+  .prediction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+  .prediction-item:last-child { border-bottom: none; }
+  .prediction-metric { font-size: 13px; font-weight: 500; }
+  .prediction-date {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-protein);
+  }
+  .prediction-na {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Mini chart after save */
+  .save-chart-preview {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+  }
+  .save-chart-preview canvas { height: 150px; }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 400;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>AJ's Health Tracker</h1>
+      <div class="streak-badge hidden" id="streak-badge">
+        <span>&#128293;</span>
+        <span id="streak-count">0</span>
+      </div>
+    </div>
+    <button class="header-btn" onclick="toggleGoals()" aria-label="Goals settings">&#9881;</button>
+  </div>
+
+  <div class="tab-content">
+    <!-- Daily Tab -->
+    <div id="tab-daily" class="tab-pane active">
+      <div class="date-display" id="daily-date"></div>
+      <div class="metric-cards" id="daily-cards">
+        <div class="metric-card card-weight" onclick="openModal('weight')">
+          <div class="metric-card-header">
+            <span class="metric-label">Weight</span>
+            <span class="metric-goal" id="goal-display-weight"></span>
+          </div>
+          <div class="metric-value" id="val-weight">--<span class="metric-unit"> kg</span></div>
+          <div class="metric-trend" id="trend-weight"></div>
+          <div class="progress-bar" id="progress-weight"></div>
+        </div>
+        <div class="metric-card card-protein" onclick="openProteinSheet()">
+          <div class="metric-card-header">
+            <span class="metric-label">Protein</span>
+            <span class="metric-goal" id="goal-display-protein"></span>
+          </div>
+          <div class="metric-value" id="val-protein">--<span class="metric-unit"> g</span></div>
+          <div class="metric-trend" id="trend-protein"></div>
+          <div class="protein-items-preview" id="protein-preview"></div>
+          <div class="progress-bar" id="progress-protein"></div>
+        </div>
+        <div class="metric-card card-steps" onclick="openModal('steps')">
+          <div class="metric-card-header">
+            <span class="metric-label">Steps</span>
+            <span class="metric-goal" id="goal-display-steps"></span>
+          </div>
+          <div class="metric-value" id="val-steps">--</div>
+          <div class="metric-trend" id="trend-steps"></div>
+          <div class="progress-bar" id="progress-steps"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Tab -->
+    <div id="tab-weekly" class="tab-pane">
+      <div class="weekly-form">
+        <div class="form-group">
+          <label>Analysis Date</label>
+          <input type="date" id="weekly-date">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Visceral Fat %</label>
+            <input type="number" inputmode="decimal" step="0.1" id="inp-visceralFat" placeholder="e.g. 8">
+          </div>
+          <div class="form-group">
+            <label>Trunk Subcut. Fat %</label>
+            <input type="number" inputmode="decimal" step="0.1" id="inp-trunkSubFat" placeholder="e.g. 18.5">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Body Fat %</label>
+            <input type="number" inputmode="decimal" step="0.1" id="inp-bodyFat" placeholder="e.g. 22">
+          </div>
+          <div class="form-group">
+            <label>Body Age</label>
+            <input type="number" inputmode="numeric" id="inp-bodyAge" placeholder="e.g. 35">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>BMI</label>
+            <input type="number" inputmode="decimal" step="0.1" id="inp-bmi" placeholder="e.g. 24.2">
+          </div>
+          <div class="form-group">
+            <label>BMR (kcal)</label>
+            <input type="number" inputmode="numeric" id="inp-bmr" placeholder="e.g. 1650">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Skeletal Muscle %</label>
+          <input type="number" inputmode="decimal" step="0.1" id="inp-skeletalMuscle" placeholder="e.g. 38.5">
+        </div>
+        <button class="btn-primary" onclick="saveWeekly()">Save Analysis</button>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="tab-history" class="tab-pane">
+      <div class="history-toggle">
+        <button class="active" onclick="setHistoryView('daily', this)">Daily</button>
+        <button onclick="setHistoryView('weekly', this)">Weekly</button>
+      </div>
+      <div id="history-content"></div>
+    </div>
+
+    <!-- Charts Tab -->
+    <div id="tab-charts" class="tab-pane">
+      <div class="chart-type-toggle">
+        <button class="active" onclick="setChartType('daily', this)">Daily</button>
+        <button onclick="setChartType('weekly', this)">Weekly</button>
+      </div>
+      <div class="chart-toggles" id="chart-chips"></div>
+      <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('daily', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Daily</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('weekly', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Weekly</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('history', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-5"/></svg>
+      <span>History</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('charts', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg>
+      <span>Charts</span>
+    </button>
+  </div>
+</div>
+
+<!-- Quick-entry modal (weight/steps) -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Weight</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <input class="modal-input" id="modal-input" type="number" inputmode="decimal">
+    <div class="modal-date">
+      <input type="date" id="modal-date">
+    </div>
+    <button class="modal-save" id="modal-save" onclick="saveDaily()">Save</button>
+  </div>
+</div>
+
+<!-- Protein bottom sheet -->
+<div class="modal-overlay" id="protein-overlay" onclick="closeProteinSheet(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Protein Intake</h3>
+      <button class="modal-close" onclick="closeProteinSheet()">&times;</button>
+    </div>
+    <div class="modal-date">
+      <input type="date" id="protein-date">
+    </div>
+    <div class="protein-total">
+      <div class="protein-total-value" id="protein-total-val">0g</div>
+      <div class="protein-total-label">Total today</div>
+    </div>
+
+    <div class="preset-grid" id="preset-grid"></div>
+
+    <button class="custom-add-btn" onclick="toggleCustomForm()">+ Add Custom Item</button>
+    <div class="custom-form" id="custom-form">
+      <input type="text" id="custom-name" placeholder="Food name">
+      <input type="number" id="custom-protein" inputmode="decimal" placeholder="Protein (g)" style="max-width:90px">
+      <button onclick="addCustomProtein()">Add</button>
+    </div>
+
+    <div class="protein-log-title">Today's Log</div>
+    <ul class="protein-log-list" id="protein-log-list"></ul>
+  </div>
+</div>
+
+<!-- Goals panel -->
+<div class="goals-panel" id="goals-panel">
+  <div class="goals-header">
+    <h2>Goals & Targets</h2>
+    <button class="goals-back" onclick="toggleGoals()">Done</button>
+  </div>
+  <div class="goals-list" id="goals-list">
+    <div class="prediction-card" id="prediction-card">
+      <h3>Predicted Target Dates</h3>
+      <div id="prediction-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+// ========== DATA LAYER ==========
+const DAILY_KEY = 'healthTracker_daily';
+const WEEKLY_KEY = 'healthTracker_weekly';
+const GOALS_KEY = 'healthTracker_goals';
+const PROTEIN_LOG_KEY = 'healthTracker_proteinLog';
+const STREAK_KEY = 'healthTracker_streak';
+
+const DAILY_METRICS = [
+  { key: 'weight', label: 'Weight', unit: 'kg', defaultDir: 'down' },
+  { key: 'protein', label: 'Protein', unit: 'g', defaultDir: 'up' },
+  { key: 'steps', label: 'Steps', unit: '', defaultDir: 'up' }
+];
+
+const WEEKLY_METRICS = [
+  { key: 'visceralFat', label: 'Visceral Fat', unit: '%', defaultDir: 'down' },
+  { key: 'trunkSubFat', label: 'Trunk Subcut. Fat', unit: '%', defaultDir: 'down' },
+  { key: 'bodyFat', label: 'Body Fat', unit: '%', defaultDir: 'down' },
+  { key: 'bodyAge', label: 'Body Age', unit: 'yrs', defaultDir: 'down' },
+  { key: 'bmi', label: 'BMI', unit: '', defaultDir: 'down' },
+  { key: 'bmr', label: 'BMR', unit: 'kcal', defaultDir: 'up' },
+  { key: 'skeletalMuscle', label: 'Skeletal Muscle', unit: '%', defaultDir: 'up' }
+];
+
+const PRESET_FOODS = [
+  { name: 'Egg', emoji: '&#129370;', protein: 6 },
+  { name: 'Chicken 100g', emoji: '&#127831;', protein: 31 },
+  { name: 'Paneer 100g', emoji: '&#129472;', protein: 18 },
+  { name: 'Whey Scoop', emoji: '&#129371;', protein: 25 },
+  { name: 'Greek Yogurt', emoji: '&#127846;', protein: 15 },
+  { name: 'Dal / Lentils', emoji: '&#127858;', protein: 18 },
+  { name: 'Milk Glass', emoji: '&#129371;', protein: 8 },
+  { name: 'Fish 100g', emoji: '&#127843;', protein: 22 }
+];
+
+const MOTIVATIONAL_MESSAGES = [
+  "Keep pushing, AJ! You're doing great!",
+  "Consistency is the key, Abisheik!",
+  "One step closer to your goals, AJ!",
+  "Small progress is still progress",
+  "Your future self will thank you, AJ!",
+  "Building habits, building strength",
+  "Every entry counts. Stay consistent, AJ!",
+  "Champions are made daily",
+  "AJ showed up today. That matters!",
+  "Discipline beats motivation",
+  "Track it to crack it, AJ!",
+  "The grind never lies",
+  "Stay focused, stay strong, Abisheik!",
+  "Progress, not perfection",
+  "AJ is writing his success story"
+];
+
+const STREAK_MILESTONES = {
+  7: "One week streak! You're on fire!",
+  14: "Two weeks strong! Unstoppable!",
+  21: "21 days — habit formed!",
+  30: "30 day warrior! Incredible!",
+  50: "50 days! Legend status!",
+  100: "100 DAYS! You are a machine!"
+};
+
+function loadData(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+}
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+function loadGoals() {
+  try { return JSON.parse(localStorage.getItem(GOALS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveGoals(goals) {
+  localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+}
+function loadStreak() {
+  try { return JSON.parse(localStorage.getItem(STREAK_KEY)) || { current: 0, best: 0, lastDate: null }; }
+  catch { return { current: 0, best: 0, lastDate: null }; }
+}
+function saveStreak(s) {
+  localStorage.setItem(STREAK_KEY, JSON.stringify(s));
+}
+function loadProteinLog() {
+  try { return JSON.parse(localStorage.getItem(PROTEIN_LOG_KEY)) || []; }
+  catch { return []; }
+}
+function saveProteinLog(data) {
+  localStorage.setItem(PROTEIN_LOG_KEY, JSON.stringify(data));
+}
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function getYesterday() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function formatDateLong(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+// ========== ANIMATED COUNTER ==========
+const prevValues = {};
+
+function animateValue(element, start, end, duration, suffix, isSteps) {
+  const startTime = performance.now();
+  const diff = end - start;
+  if (Math.abs(diff) < 0.01) return;
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current = start + diff * eased;
+
+    if (isSteps) {
+      element.innerHTML = Math.round(current).toLocaleString();
+    } else {
+      element.innerHTML = current.toFixed(1) + suffix;
+    }
+
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#ff3b30','#ff9500','#ffcc00','#34c759','#4a9ff5','#af52de','#ff2d55'];
+  const particles = [];
+
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 12,
+      vy: -Math.random() * 14 - 4,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      alpha: 1
+    });
+  }
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.vy += 0.3;
+      p.y += p.vy;
+      p.rotation += p.rotSpeed;
+      p.alpha -= 0.012;
+      if (p.alpha <= 0) return;
+      alive = true;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 120) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+// ========== STREAK ==========
+function updateStreak() {
+  const streak = loadStreak();
+  const today = getToday();
+  const yesterday = getYesterday();
+
+  if (streak.lastDate === today) {
+    // Already logged today
+  } else if (streak.lastDate === yesterday) {
+    streak.current += 1;
+    streak.lastDate = today;
+  } else {
+    streak.current = 1;
+    streak.lastDate = today;
+  }
+  if (streak.current > streak.best) streak.best = streak.current;
+  saveStreak(streak);
+  renderStreak();
+  return streak;
+}
+
+function renderStreak() {
+  const streak = loadStreak();
+  const badge = document.getElementById('streak-badge');
+  const count = document.getElementById('streak-count');
+  if (streak.current > 0) {
+    badge.classList.remove('hidden');
+    count.textContent = streak.current;
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// ========== DAILY TAB ==========
+let currentMetric = null;
+
+function renderDaily() {
+  const today = getToday();
+  document.getElementById('daily-date').textContent = formatDateLong(today);
+
+  const dailyData = loadData(DAILY_KEY);
+  const goals = loadGoals();
+  const todayEntry = dailyData.find(d => d.date === today);
+  const sorted = [...dailyData].sort((a, b) => b.date.localeCompare(a.date));
+
+  // Protein from protein log
+  const proteinLog = loadProteinLog();
+  const todayProteinLog = proteinLog.find(d => d.date === today);
+  const proteinTotal = todayProteinLog ? todayProteinLog.items.reduce((s, i) => s + i.protein * i.qty, 0) : 0;
+
+  // Sync protein to daily data
+  if (proteinTotal > 0) {
+    const idx = dailyData.findIndex(d => d.date === today);
+    if (idx >= 0) {
+      dailyData[idx].protein = proteinTotal;
+    } else {
+      dailyData.push({ date: today, protein: proteinTotal });
+    }
+    saveData(DAILY_KEY, dailyData);
+  }
+
+  const updatedEntry = dailyData.find(d => d.date === today);
+
+  DAILY_METRICS.forEach(m => {
+    const val = m.key === 'protein' ? proteinTotal || (updatedEntry ? updatedEntry[m.key] : null) : (updatedEntry ? updatedEntry[m.key] : null);
+    const valEl = document.getElementById('val-' + m.key);
+    const trendEl = document.getElementById('trend-' + m.key);
+    const goalEl = document.getElementById('goal-display-' + m.key);
+    const progressEl = document.getElementById('progress-' + m.key);
+
+    // Animated value
+    const prevVal = prevValues[m.key];
+    if (val !== null && val !== undefined) {
+      if (prevVal !== undefined && prevVal !== val) {
+        const suffix = m.unit ? '<span class="metric-unit"> ' + m.unit + '</span>' : '';
+        animateValue(valEl, prevVal, val, 600, suffix, m.key === 'steps');
+      } else {
+        if (m.key === 'steps') {
+          valEl.innerHTML = Number(val).toLocaleString();
+        } else {
+          valEl.innerHTML = val + '<span class="metric-unit"> ' + m.unit + '</span>';
+        }
+      }
+      prevValues[m.key] = val;
+    } else {
+      valEl.innerHTML = '--' + (m.unit ? '<span class="metric-unit"> ' + m.unit + '</span>' : '');
+      prevValues[m.key] = undefined;
+    }
+
+    // Trend
+    const prev = sorted.find(d => d.date < today && d[m.key] != null);
+    if (val != null && prev) {
+      const diff = val - prev[m.key];
+      const goal = goals[m.key];
+      const dir = goal ? goal.direction : m.defaultDir;
+      if (Math.abs(diff) < 0.01) {
+        trendEl.innerHTML = '&#8596; No change';
+        trendEl.className = 'metric-trend trend-neutral';
+      } else {
+        const arrow = diff > 0 ? '&#9650;' : '&#9660;';
+        const isGood = (dir === 'up' && diff > 0) || (dir === 'down' && diff < 0);
+        trendEl.innerHTML = arrow + ' ' + Math.abs(diff).toFixed(1) + ' from prev';
+        trendEl.className = 'metric-trend ' + (isGood ? 'trend-good' : 'trend-bad');
+      }
+    } else {
+      trendEl.innerHTML = '';
+    }
+
+    // Goal display
+    const goal = goals[m.key];
+    if (goal && goal.target) {
+      goalEl.textContent = 'Goal: ' + goal.target + (m.unit ? ' ' + m.unit : '');
+    } else {
+      goalEl.textContent = '';
+    }
+
+    // Progress bar
+    if (val != null && goal && goal.target) {
+      const dir = goal.direction || m.defaultDir;
+      let pct;
+      if (dir === 'down') {
+        const start = sorted.length > 1 ? Math.max(...sorted.map(d => d[m.key]).filter(v => v != null)) : val * 1.2;
+        pct = start === goal.target ? 100 : Math.min(100, Math.max(0, ((start - val) / (start - goal.target)) * 100));
+      } else {
+        pct = Math.min(100, Math.max(0, (val / goal.target) * 100));
+      }
+      progressEl.style.width = pct + '%';
+    } else {
+      progressEl.style.width = '0%';
+    }
+  });
+
+  // Protein preview chips
+  const preview = document.getElementById('protein-preview');
+  if (todayProteinLog && todayProteinLog.items.length > 0) {
+    preview.innerHTML = todayProteinLog.items.slice(0, 4).map(i =>
+      '<span class="protein-item-chip">' + i.name + (i.qty > 1 ? ' x' + i.qty : '') + '</span>'
+    ).join('') + (todayProteinLog.items.length > 4 ? '<span class="protein-item-chip">+' + (todayProteinLog.items.length - 4) + '</span>' : '');
+  } else {
+    preview.innerHTML = '';
+  }
+
+  // Animate cards in
+  animateCards();
+}
+
+function animateCards() {
+  const cards = document.querySelectorAll('#daily-cards .metric-card');
+  cards.forEach((card, i) => {
+    card.classList.remove('animate-in');
+    card.style.animationDelay = (i * 80) + 'ms';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        card.classList.add('animate-in');
+      });
+    });
+  });
+}
+
+// ========== DAILY MODAL (weight/steps) ==========
+function openModal(metric) {
+  currentMetric = metric;
+  const m = DAILY_METRICS.find(d => d.key === metric);
+  document.getElementById('modal-title').textContent = m.label + (m.unit ? ' (' + m.unit + ')' : '');
+  document.getElementById('modal-date').value = getToday();
+
+  const colors = { weight: 'var(--accent-weight)', protein: 'var(--accent-protein)', steps: 'var(--accent-steps)' };
+  document.getElementById('modal-save').style.background = colors[metric] || 'var(--accent-protein)';
+
+  const dailyData = loadData(DAILY_KEY);
+  const today = getToday();
+  const entry = dailyData.find(d => d.date === today);
+  document.getElementById('modal-input').value = entry && entry[metric] != null ? entry[metric] : '';
+
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('modal-input').focus(), 100);
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('show');
+  currentMetric = null;
+}
+
+function saveDaily() {
+  const val = parseFloat(document.getElementById('modal-input').value);
+  if (isNaN(val)) return;
+  const date = document.getElementById('modal-date').value || getToday();
+  const savedMetric = currentMetric;
+
+  let data = loadData(DAILY_KEY);
+  const idx = data.findIndex(d => d.date === date);
+  if (idx >= 0) {
+    data[idx][currentMetric] = val;
+  } else {
+    const entry = { date };
+    entry[currentMetric] = val;
+    data.push(entry);
+  }
+  data.sort((a, b) => a.date.localeCompare(b.date));
+  saveData(DAILY_KEY, data);
+
+  closeModal();
+  renderDaily();
+
+  // Check goal achievement
+  checkGoalConfetti(savedMetric, val);
+
+  // Update streak & show motivational message
+  const streak = updateStreak();
+  const milestoneMsg = STREAK_MILESTONES[streak.current];
+  if (milestoneMsg) {
+    showToast(milestoneMsg);
+  } else {
+    showToast(MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]);
+  }
+
+  // Auto-switch to charts tab showing the saved metric
+  setTimeout(() => {
+    chartType = 'daily';
+    activeChartMetrics = new Set([savedMetric]);
+    const chartsBtn = document.querySelectorAll('.tab-btn')[3];
+    switchTab('charts', chartsBtn);
+  }, 800);
+}
+
+function checkGoalConfetti(metric, val) {
+  const goals = loadGoals();
+  const goal = goals[metric];
+  if (!goal || !goal.target) return;
+  const m = DAILY_METRICS.find(x => x.key === metric) || WEEKLY_METRICS.find(x => x.key === metric);
+  const dir = goal.direction || (m ? m.defaultDir : 'up');
+  const met = (dir === 'up' && val >= goal.target) || (dir === 'down' && val <= goal.target);
+  if (met) launchConfetti();
+}
+
+// ========== PROTEIN SHEET ==========
+function openProteinSheet() {
+  document.getElementById('protein-date').value = getToday();
+  renderProteinSheet();
+  document.getElementById('protein-overlay').classList.add('show');
+}
+
+function closeProteinSheet(e) {
+  if (e && e.target !== document.getElementById('protein-overlay')) return;
+  document.getElementById('protein-overlay').classList.remove('show');
+  document.getElementById('custom-form').classList.remove('show');
+}
+
+function renderProteinSheet() {
+  const date = document.getElementById('protein-date').value || getToday();
+  const log = loadProteinLog();
+  let dayLog = log.find(d => d.date === date);
+  if (!dayLog) { dayLog = { date, items: [] }; }
+
+  const total = dayLog.items.reduce((s, i) => s + i.protein * i.qty, 0);
+  document.getElementById('protein-total-val').textContent = total + 'g';
+
+  // Presets
+  const grid = document.getElementById('preset-grid');
+  grid.innerHTML = PRESET_FOODS.map((f, i) =>
+    '<button class="preset-btn" onclick="addPresetProtein(' + i + ', this)">' +
+    '<span class="preset-emoji">' + f.emoji + '</span>' +
+    '<div class="preset-info"><div class="preset-name">' + f.name + '</div>' +
+    '<div class="preset-grams">' + f.protein + 'g protein</div></div></button>'
+  ).join('');
+
+  // Log list
+  const list = document.getElementById('protein-log-list');
+  if (dayLog.items.length === 0) {
+    list.innerHTML = '<div class="protein-log-empty">No items logged yet. Tap a food to add it.</div>';
+  } else {
+    list.innerHTML = dayLog.items.map((item, i) =>
+      '<li class="protein-log-item">' +
+      '<div class="protein-log-item-info">' +
+      '<span class="protein-log-item-name">' + item.name + '</span>' +
+      '<span class="protein-log-item-qty">x' + item.qty + '</span>' +
+      '</div>' +
+      '<span class="protein-log-item-grams">' + (item.protein * item.qty) + 'g</span>' +
+      '<button class="protein-log-item-delete" onclick="removeProteinItem(' + i + ')">&#10005;</button>' +
+      '</li>'
+    ).join('');
+  }
+}
+
+function addPresetProtein(index, btn) {
+  const food = PRESET_FOODS[index];
+  const date = document.getElementById('protein-date').value || getToday();
+  let log = loadProteinLog();
+  let dayLog = log.find(d => d.date === date);
+  if (!dayLog) { dayLog = { date, items: [] }; log.push(dayLog); }
+
+  const existing = dayLog.items.find(i => i.name === food.name);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    dayLog.items.push({ name: food.name, protein: food.protein, qty: 1 });
+  }
+  saveProteinLog(log);
+
+  // Bounce animation
+  btn.classList.remove('bounce');
+  void btn.offsetWidth;
+  btn.classList.add('bounce');
+
+  renderProteinSheet();
+  syncProteinToDaily(date);
+  renderDaily();
+
+  // Check protein goal
+  const total = dayLog.items.reduce((s, i) => s + i.protein * i.qty, 0);
+  checkGoalConfetti('protein', total);
+}
+
+function addCustomProtein() {
+  const name = document.getElementById('custom-name').value.trim();
+  const protein = parseFloat(document.getElementById('custom-protein').value);
+  if (!name || isNaN(protein)) return;
+
+  const date = document.getElementById('protein-date').value || getToday();
+  let log = loadProteinLog();
+  let dayLog = log.find(d => d.date === date);
+  if (!dayLog) { dayLog = { date, items: [] }; log.push(dayLog); }
+
+  dayLog.items.push({ name, protein, qty: 1 });
+  saveProteinLog(log);
+
+  document.getElementById('custom-name').value = '';
+  document.getElementById('custom-protein').value = '';
+  document.getElementById('custom-form').classList.remove('show');
+
+  renderProteinSheet();
+  syncProteinToDaily(date);
+  renderDaily();
+
+  const total = dayLog.items.reduce((s, i) => s + i.protein * i.qty, 0);
+  checkGoalConfetti('protein', total);
+
+  const streak = updateStreak();
+  const milestoneMsg = STREAK_MILESTONES[streak.current];
+  if (milestoneMsg) showToast(milestoneMsg);
+  else showToast(MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]);
+}
+
+function removeProteinItem(index) {
+  const date = document.getElementById('protein-date').value || getToday();
+  let log = loadProteinLog();
+  let dayLog = log.find(d => d.date === date);
+  if (!dayLog) return;
+  dayLog.items.splice(index, 1);
+  saveProteinLog(log);
+  renderProteinSheet();
+  syncProteinToDaily(date);
+  renderDaily();
+}
+
+function toggleCustomForm() {
+  const form = document.getElementById('custom-form');
+  form.classList.toggle('show');
+  if (form.classList.contains('show')) {
+    setTimeout(() => document.getElementById('custom-name').focus(), 100);
+  }
+}
+
+function syncProteinToDaily(date) {
+  const log = loadProteinLog();
+  const dayLog = log.find(d => d.date === date);
+  const total = dayLog ? dayLog.items.reduce((s, i) => s + i.protein * i.qty, 0) : 0;
+
+  let data = loadData(DAILY_KEY);
+  const idx = data.findIndex(d => d.date === date);
+  if (idx >= 0) {
+    data[idx].protein = total;
+  } else if (total > 0) {
+    data.push({ date, protein: total });
+  }
+  data.sort((a, b) => a.date.localeCompare(b.date));
+  saveData(DAILY_KEY, data);
+}
+
+// Listen to date change on protein sheet
+document.getElementById('protein-date').addEventListener('change', renderProteinSheet);
+
+// ========== WEEKLY TAB ==========
+function initWeekly() {
+  document.getElementById('weekly-date').value = getToday();
+}
+
+function saveWeekly() {
+  const date = document.getElementById('weekly-date').value || getToday();
+  const entry = { date };
+  let hasValue = false;
+  WEEKLY_METRICS.forEach(m => {
+    const v = parseFloat(document.getElementById('inp-' + m.key).value);
+    if (!isNaN(v)) { entry[m.key] = v; hasValue = true; }
+  });
+  if (!hasValue) { showToast('Enter at least one value'); return; }
+
+  let data = loadData(WEEKLY_KEY);
+  const idx = data.findIndex(d => d.date === date);
+  if (idx >= 0) { Object.assign(data[idx], entry); }
+  else { data.push(entry); }
+  data.sort((a, b) => a.date.localeCompare(b.date));
+  saveData(WEEKLY_KEY, data);
+
+  WEEKLY_METRICS.forEach(m => { document.getElementById('inp-' + m.key).value = ''; });
+
+  // Check goals for confetti
+  WEEKLY_METRICS.forEach(m => {
+    if (entry[m.key] != null) checkGoalConfetti(m.key, entry[m.key]);
+  });
+
+  showToast('Analysis saved! ' + MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]);
+
+  // Auto-switch to charts tab showing first weekly metric entered
+  const firstMetric = WEEKLY_METRICS.find(m => entry[m.key] != null);
+  if (firstMetric) {
+    setTimeout(() => {
+      chartType = 'weekly';
+      activeChartMetrics = new Set([firstMetric.key]);
+      const chartsBtn = document.querySelectorAll('.tab-btn')[3];
+      switchTab('charts', chartsBtn);
+    }, 800);
+  }
+}
+
+// ========== HISTORY TAB ==========
+let historyView = 'daily';
+
+function setHistoryView(view, btn) {
+  historyView = view;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-content');
+  if (historyView === 'daily') {
+    const data = loadData(DAILY_KEY).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+    const goals = loadGoals();
+    if (!data.length) { container.innerHTML = '<div class="empty-state">No daily entries yet.<br>Tap a metric card to start logging.</div>'; return; }
+
+    let html = '<table class="history-table"><thead><tr><th>Date</th><th>Weight</th><th>Protein</th><th>Steps</th></tr></thead><tbody>';
+    data.forEach((d, i) => {
+      const prev = data[i + 1];
+      html += '<tr><td>' + formatDate(d.date) + '</td>';
+      DAILY_METRICS.forEach(m => {
+        const v = d[m.key];
+        let trend = '';
+        if (v != null && prev && prev[m.key] != null) {
+          const diff = v - prev[m.key];
+          const dir = (goals[m.key] && goals[m.key].direction) || m.defaultDir;
+          if (Math.abs(diff) >= 0.01) {
+            const isGood = (dir === 'up' && diff > 0) || (dir === 'down' && diff < 0);
+            trend = ' <span class="' + (isGood ? 'trend-good' : 'trend-bad') + '">' + (diff > 0 ? '&#9650;' : '&#9660;') + '</span>';
+          }
+        }
+        html += '<td>' + (v != null ? (m.key === 'steps' ? Number(v).toLocaleString() : v) : '-') + trend + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } else {
+    const data = loadData(WEEKLY_KEY).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+    const goals = loadGoals();
+    if (!data.length) { container.innerHTML = '<div class="empty-state">No weekly analyses yet.<br>Use the Weekly tab to log your first analysis.</div>'; return; }
+
+    let html = '<div style="overflow-x:auto"><table class="history-table"><thead><tr><th>Date</th>';
+    WEEKLY_METRICS.forEach(m => { html += '<th>' + m.label.split(' ').map(w => w[0]).join('') + '</th>'; });
+    html += '</tr></thead><tbody>';
+    data.forEach((d, i) => {
+      const prev = data[i + 1];
+      html += '<tr><td>' + formatDate(d.date) + '</td>';
+      WEEKLY_METRICS.forEach(m => {
+        const v = d[m.key];
+        let trend = '';
+        if (v != null && prev && prev[m.key] != null) {
+          const diff = v - prev[m.key];
+          const dir = (goals[m.key] && goals[m.key].direction) || m.defaultDir;
+          if (Math.abs(diff) >= 0.01) {
+            const isGood = (dir === 'up' && diff > 0) || (dir === 'down' && diff < 0);
+            trend = ' <span class="' + (isGood ? 'trend-good' : 'trend-bad') + '">' + (diff > 0 ? '&#9650;' : '&#9660;') + '</span>';
+          }
+        }
+        html += '<td>' + (v != null ? v : '-') + trend + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
+}
+
+// ========== CHARTS TAB ==========
+let chartType = 'daily';
+let activeChartMetrics = new Set(['weight']);
+let chartInstance = null;
+
+const CHART_COLORS = {
+  weight: '#e94560', protein: '#4a9ff5', steps: '#53d769',
+  visceralFat: '#f5a623', trunkSubFat: '#9b59b6', bodyFat: '#e74c3c',
+  bodyAge: '#1abc9c', bmi: '#3498db', bmr: '#e67e22', skeletalMuscle: '#2ecc71'
+};
+
+function setChartType(type, btn) {
+  chartType = type;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const metrics = type === 'daily' ? DAILY_METRICS : WEEKLY_METRICS;
+  activeChartMetrics = new Set([metrics[0].key]);
+  renderChartChips();
+  renderChart();
+}
+
+function renderChartChips() {
+  const metrics = chartType === 'daily' ? DAILY_METRICS : WEEKLY_METRICS;
+  const container = document.getElementById('chart-chips');
+  container.innerHTML = metrics.map(m =>
+    '<button class="chart-chip ' + (activeChartMetrics.has(m.key) ? 'active' : '') + '" onclick="toggleChartMetric(\'' + m.key + '\', this)">' + m.label + '</button>'
+  ).join('');
+}
+
+function toggleChartMetric(key, btn) {
+  if (activeChartMetrics.has(key)) {
+    if (activeChartMetrics.size > 1) activeChartMetrics.delete(key);
+  } else {
+    activeChartMetrics.add(key);
+  }
+  btn.classList.toggle('active', activeChartMetrics.has(key));
+  renderChart();
+}
+
+function renderChart() {
+  const data = chartType === 'daily' ? loadData(DAILY_KEY) : loadData(WEEKLY_KEY);
+  const goals = loadGoals();
+  const allMetrics = chartType === 'daily' ? DAILY_METRICS : WEEKLY_METRICS;
+  const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+  const labels = sorted.map(d => formatDate(d.date));
+
+  const datasets = [];
+  activeChartMetrics.forEach(key => {
+    const m = allMetrics.find(x => x.key === key);
+    datasets.push({
+      label: m.label + (m.unit ? ' (' + m.unit + ')' : ''),
+      data: sorted.map(d => d[key] != null ? d[key] : null),
+      borderColor: CHART_COLORS[key],
+      backgroundColor: CHART_COLORS[key] + '15',
+      tension: 0.3,
+      fill: true,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      spanGaps: true,
+      borderWidth: 2.5
+    });
+
+    const goal = goals[key];
+    if (goal && goal.target && sorted.length > 0) {
+      datasets.push({
+        label: m.label + ' Goal',
+        data: sorted.map(() => goal.target),
+        borderColor: CHART_COLORS[key] + '50',
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+        borderWidth: 1.5
+      });
+    }
+  });
+
+  if (chartInstance) chartInstance.destroy();
+
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: datasets.length > 1,
+          labels: { color: '#86868b', font: { size: 11 }, boxWidth: 12 }
+        },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          titleColor: '#1d1d1f',
+          bodyColor: '#1d1d1f',
+          borderColor: 'rgba(0,0,0,0.1)',
+          borderWidth: 1,
+          cornerRadius: 10,
+          padding: 10
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#86868b', font: { size: 10 }, maxRotation: 45 },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y: {
+          ticks: { color: '#86868b', font: { size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        }
+      }
+    }
+  });
+}
+
+// ========== GOALS ==========
+function toggleGoals() {
+  const panel = document.getElementById('goals-panel');
+  panel.classList.toggle('show');
+  if (panel.classList.contains('show')) renderGoals();
+}
+
+function renderGoals() {
+  const goals = loadGoals();
+  const allMetrics = [...DAILY_METRICS, ...WEEKLY_METRICS];
+
+  // Render prediction card first
+  renderPredictions();
+
+  // Render goal inputs after the prediction card
+  const container = document.getElementById('goals-list');
+  const predictionHtml = document.getElementById('prediction-card').outerHTML;
+
+  container.innerHTML = predictionHtml + allMetrics.map(m => {
+    const g = goals[m.key] || {};
+    const dir = g.direction || m.defaultDir;
+    return '<div class="goal-item"><label>' + m.label + (m.unit ? ' (' + m.unit + ')' : '') + '</label>' +
+      '<div class="goal-row">' +
+      '<input type="number" inputmode="decimal" placeholder="Target" value="' + (g.target || '') + '" onchange="updateGoal(\'' + m.key + '\', \'target\', this.value)">' +
+      '<div class="goal-direction">' +
+      '<button class="' + (dir === 'down' ? 'active' : '') + '" onclick="updateGoal(\'' + m.key + '\', \'direction\', \'down\'); renderGoals()">&#9660; Lower</button>' +
+      '<button class="' + (dir === 'up' ? 'active' : '') + '" onclick="updateGoal(\'' + m.key + '\', \'direction\', \'up\'); renderGoals()">&#9650; Higher</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+function updateGoal(key, field, value) {
+  const goals = loadGoals();
+  if (!goals[key]) {
+    const m = [...DAILY_METRICS, ...WEEKLY_METRICS].find(x => x.key === key);
+    goals[key] = { direction: m.defaultDir };
+  }
+  if (field === 'target') {
+    goals[key].target = value ? parseFloat(value) : null;
+  } else {
+    goals[key][field] = value;
+  }
+  saveGoals(goals);
+  renderDaily();
+}
+
+// ========== TARGET DATE PREDICTION ==========
+function predictTargetDate(metricKey, isWeekly) {
+  const goals = loadGoals();
+  const goal = goals[metricKey];
+  if (!goal || !goal.target) return null;
+
+  const data = isWeekly ? loadData(WEEKLY_KEY) : loadData(DAILY_KEY);
+  const sorted = [...data].filter(d => d[metricKey] != null).sort((a, b) => a.date.localeCompare(b.date));
+
+  if (sorted.length < 2) return null;
+
+  // Use linear regression on last 14 data points (or all if fewer)
+  const recent = sorted.slice(-14);
+  const startDate = new Date(recent[0].date + 'T00:00:00');
+  const xs = recent.map(d => (new Date(d.date + 'T00:00:00') - startDate) / 86400000); // days from start
+  const ys = recent.map(d => d[metricKey]);
+
+  const n = xs.length;
+  const sumX = xs.reduce((a, b) => a + b, 0);
+  const sumY = ys.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0);
+  const sumX2 = xs.reduce((a, x) => a + x * x, 0);
+
+  const denom = n * sumX2 - sumX * sumX;
+  if (Math.abs(denom) < 0.001) return null;
+
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+
+  if (Math.abs(slope) < 0.001) return null; // flat trend
+
+  const m = [...DAILY_METRICS, ...WEEKLY_METRICS].find(x => x.key === metricKey);
+  const dir = goal.direction || (m ? m.defaultDir : 'up');
+
+  // Check if trending in the right direction
+  const movingRight = (dir === 'down' && slope < 0) || (dir === 'up' && slope > 0);
+  if (!movingRight) return { status: 'wrong_direction' };
+
+  // Calculate days to reach target from the last data point
+  const lastX = xs[xs.length - 1];
+  const currentPredicted = slope * lastX + intercept;
+  const daysToTarget = (goal.target - currentPredicted) / slope;
+
+  if (daysToTarget < 0) return { status: 'achieved' };
+
+  const targetDate = new Date(sorted[sorted.length - 1].date + 'T00:00:00');
+  targetDate.setDate(targetDate.getDate() + Math.ceil(daysToTarget));
+
+  return {
+    status: 'on_track',
+    date: targetDate,
+    daysLeft: Math.ceil(daysToTarget),
+    rate: slope // per day change rate
+  };
+}
+
+function renderPredictions() {
+  const list = document.getElementById('prediction-list');
+  const allMetrics = [...DAILY_METRICS, ...WEEKLY_METRICS];
+  const goals = loadGoals();
+
+  let html = '';
+  allMetrics.forEach(m => {
+    const goal = goals[m.key];
+    if (!goal || !goal.target) return;
+
+    const isWeekly = WEEKLY_METRICS.some(w => w.key === m.key);
+    const prediction = predictTargetDate(m.key, isWeekly);
+
+    html += '<div class="prediction-item">';
+    html += '<span class="prediction-metric">' + m.label + '</span>';
+
+    if (!prediction) {
+      html += '<span class="prediction-na">Need more data</span>';
+    } else if (prediction.status === 'achieved') {
+      html += '<span class="prediction-date" style="color:var(--accent-green)">Goal reached!</span>';
+    } else if (prediction.status === 'wrong_direction') {
+      html += '<span class="prediction-na" style="color:var(--accent-red)">Trending away from goal</span>';
+    } else {
+      const dateStr = prediction.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      html += '<span class="prediction-date">' + dateStr + ' (~' + prediction.daysLeft + 'd)</span>';
+    }
+    html += '</div>';
+  });
+
+  if (!html) {
+    html = '<div class="prediction-na" style="text-align:center;padding:8px 0">Set goals below to see predictions</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+// ========== NAVIGATION ==========
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (tabId === 'daily') renderDaily();
+  if (tabId === 'history') renderHistory();
+  if (tabId === 'charts') { renderChartChips(); setTimeout(renderChart, 50); }
+}
+
+// ========== TOAST ==========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== KEYBOARD SUPPORT ==========
+document.getElementById('modal-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveDaily();
+});
+document.getElementById('custom-protein').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addCustomProtein();
+});
+
+// ========== INIT ==========
+renderDaily();
+initWeekly();
+renderStreak();
+</script>
+</body>
+</html>
